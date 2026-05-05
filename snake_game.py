@@ -23,6 +23,7 @@ import pygame
 import random
 import math
 import json
+import datetime
 import os
 import sys
 from dataclasses import dataclass, field
@@ -244,20 +245,46 @@ class ScoreManager:
 
     def update(self, dt):
         self.flash_t = max(0.0, self.flash_t - dt)
+        
+    def _get_performance_label(self, score):
+        if score < 50:
+            return "beginner"
+        elif score < 150:
+            return "intermediate"
+        else:
+            return "advanced"
 
     def _load(self) -> int:
         if os.path.exists(HIGHSCORE_FILE):
             try:
                 with open(HIGHSCORE_FILE) as f:
-                    return json.load(f).get("high", 0)
+                    data = json.load(f)
+                    return data.get("highscore", 0)
             except Exception:
                 pass
         return 0
 
     def _save(self):
         try:
+            data = {
+                "player_id": "local_user",
+                "highscore": self.high,
+                "metadata": {
+                    "last_updated": datetime.datetime.now().isoformat(),
+                    "game": "snake"
+                },
+                "performance": {
+                    "level": self._get_performance_label(self.high)
+                },
+                "history": [
+                    {
+                        "score": self.high,
+                        "label": self._get_performance_label(self.high)
+                    }
+                ]
+            }
             with open(HIGHSCORE_FILE, "w") as f:
-                json.dump({"high": self.high}, f)
+                json.dump(data, f, indent=4)
         except Exception:
             pass
 
